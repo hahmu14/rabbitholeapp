@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rabbithole — Depth Before Surface</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Karla:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0d0b1a;
+  --bg2: #110e22;
+  --surface: #18143a;
+  --border: rgba(175,169,236,0.08);
+  --border2: rgba(175,169,236,0.18);
+  --text: #f0eeff;
+  --text2: rgba(240,238,255,0.55);
+  --text3: rgba(240,238,255,0.28);
+  --purple: #7F77DD;
+  --purple2: #AFA9EC;
+  --purple-deep: #534AB7;
+  --purple-dark: #3C3489;
+}
+
+html { font-size: 16px; scroll-behavior: smooth; }
+
+body {
+  font-family: 'Karla', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-weight: 300;
+  line-height: 1.7;
+  overflow-x: hidden;
+  cursor: none;
+}
+
+.cursor {
+  width: 8px; height: 8px;
+  background: var(--purple);
+  border-radius: 50%;
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  transition: transform 0.15s ease;
+  transform: translate(-50%, -50%);
+}
+.cursor-ring {
+  width: 32px; height: 32px;
+  border: 1px solid rgba(127,119,221,0.4);
+  border-radius: 50%;
+  position: fixed;
+  pointer-events: none;
+  z-index: 9998;
+  transform: translate(-50%, -50%);
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 0.35;
+}
+
+nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  padding: 24px 48px;
+  display: flex; justify-content: space-between; align-items: center;
+  z-index: 100;
+  background: linear-gradient(to bottom, rgba(13,11,26,0.92), transparent);
+}
+.nav-logo {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px; font-weight: 600;
+  color: var(--text); letter-spacing: 0.02em;
+}
+.nav-logo span { color: var(--purple2); font-style: italic; }
+.nav-cta {
+  font-size: 12px; font-weight: 500;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--purple2); text-decoration: none;
+  border-bottom: 1px solid rgba(175,169,236,0.3);
+  padding-bottom: 2px;
+  transition: border-color 0.2s;
+}
+.nav-cta:hover { border-color: var(--purple2); }
+
+/* HERO */
+.hero {
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+  justify-content: center; align-items: flex-start;
+  padding: 120px 48px 80px;
+  position: relative; overflow: hidden;
+}
+.hero-bg {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 70% 50%, rgba(127,119,221,0.07) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 40% at 20% 80%, rgba(83,74,183,0.05) 0%, transparent 60%);
+}
+.circle {
+  position: absolute; border-radius: 50%;
+  border: 1px solid rgba(127,119,221,0.09);
+  animation: breathe 8s ease-in-out infinite;
+}
+.c1 { width: 600px; height: 600px; right: -150px; top: 50%; transform: translateY(-50%); animation-delay: 0s; }
+.c2 { width: 420px; height: 420px; right: -60px; top: 50%; transform: translateY(-50%); animation-delay: 1.5s; }
+.c3 { width: 260px; height: 260px; right: 30px; top: 50%; transform: translateY(-50%); animation-delay: 3s; }
+@keyframes breathe {
+  0%, 100% { opacity: 0.4; transform: translateY(-50%) scale(1); }
+  50% { opacity: 0.9; transform: translateY(-50%) scale(1.03); }
+}
+
+.hero-kicker {
+  font-size: 11px; font-weight: 500;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--purple2); margin-bottom: 24px;
+  opacity: 0; animation: fadeUp 0.8s ease forwards 0.2s;
+}
+.hero-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(64px, 10vw, 120px);
+  line-height: 0.92; letter-spacing: -0.02em;
+  color: var(--text); margin-bottom: 32px; max-width: 700px;
+  opacity: 0; animation: fadeUp 0.8s ease forwards 0.4s;
+}
+.hero-title em { color: var(--purple2); font-style: italic; }
+.hero-sub {
+  font-size: 18px; color: var(--text2);
+  max-width: 480px; line-height: 1.65; margin-bottom: 48px;
+  opacity: 0; animation: fadeUp 0.8s ease forwards 0.6s;
+}
+
+.waitlist-form {
+  display: flex; gap: 12px; flex-wrap: wrap;
+  opacity: 0; animation: fadeUp 0.8s ease forwards 0.8s;
+}
+.email-input {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 6px; padding: 14px 20px;
+  font-family: 'Karla', sans-serif;
+  font-size: 15px; font-weight: 300; color: var(--text);
+  width: 300px; outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.email-input::placeholder { color: var(--text3); }
+.email-input:focus {
+  border-color: rgba(127,119,221,0.5);
+  box-shadow: 0 0 0 3px rgba(127,119,221,0.08);
+}
+.submit-btn {
+  background: var(--purple-deep);
+  border: none; border-radius: 6px; padding: 14px 28px;
+  font-family: 'Karla', sans-serif;
+  font-size: 13px; font-weight: 500;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: #fff; cursor: none;
+  transition: background 0.2s, transform 0.15s; white-space: nowrap;
+}
+.submit-btn:hover { background: var(--purple); transform: translateY(-1px); }
+.submit-btn:active { transform: translateY(0); }
+.form-note { width: 100%; font-size: 12px; color: var(--text3); margin-top: 8px; letter-spacing: 0.03em; }
+.success-msg {
+  display: none;
+  background: rgba(83,74,183,0.12);
+  border: 1px solid rgba(127,119,221,0.25);
+  border-radius: 6px; padding: 14px 20px;
+  font-size: 14px; color: var(--purple2);
+}
+
+.question-teaser {
+  margin-top: 64px;
+  opacity: 0; animation: fadeUp 0.8s ease forwards 1s;
+}
+.qt-label {
+  font-size: 10px; font-weight: 500;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--text3); margin-bottom: 14px;
+}
+.qt-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px; padding: 20px 24px;
+  max-width: 440px; position: relative; overflow: hidden;
+}
+.qt-card::before {
+  content: '';
+  position: absolute; left: 0; top: 0; bottom: 0;
+  width: 3px; background: var(--purple);
+  border-radius: 3px 0 0 3px;
+}
+.qt-layer {
+  font-size: 10px; font-weight: 500;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--purple2); margin-bottom: 8px;
+}
+.qt-question {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px; line-height: 1.45;
+  color: var(--text); font-style: italic;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.section-divider { height: 1px; background: var(--border); margin: 0 48px; }
+
+/* EMOTIONAL HOOK */
+.hook {
+  padding: 100px 48px;
+}
+.hook-intro {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(28px, 4vw, 42px);
+  line-height: 1.25; letter-spacing: -0.01em;
+  color: var(--text); max-width: 640px;
+  margin-bottom: 48px;
+}
+.hook-intro em { color: var(--purple2); font-style: italic; }
+
+.hook-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+.hook-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px; padding: 24px;
+  position: relative; overflow: hidden;
+  transition: border-color 0.2s;
+}
+.hook-card:hover { border-color: rgba(175,169,236,0.2); }
+.hook-card::before {
+  content: '';
+  position: absolute; left: 0; top: 0; bottom: 0;
+  width: 2px; background: var(--purple);
+  opacity: 0.5;
+}
+.hook-card p {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 17px; line-height: 1.55;
+  color: var(--text2); font-style: italic;
+}
+
+/* HOW IT WORKS */
+.how { padding: 100px 48px; background: var(--bg2); }
+.how-header { margin-bottom: 56px; }
+.section-kicker {
+  font-size: 11px; font-weight: 500;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--purple2); margin-bottom: 14px;
+}
+.section-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(36px, 5vw, 56px);
+  line-height: 1.1; letter-spacing: -0.02em;
+}
+.section-title em { color: var(--purple2); font-style: italic; }
+
+.layers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 2px;
+  border: 1px solid var(--border);
+  border-radius: 12px; overflow: hidden;
+}
+.layer-card {
+  background: var(--surface);
+  padding: 28px 24px; transition: background 0.2s; position: relative;
+}
+.layer-card:hover { background: #1e1845; }
+.layer-card::after {
+  content: '';
+  position: absolute; right: 0; top: 20%; bottom: 20%;
+  width: 1px; background: var(--border);
+}
+.layer-card:last-child::after { display: none; }
+.layer-num-badge {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: rgba(127,119,221,0.1);
+  border: 1px solid rgba(127,119,221,0.22);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 500; color: var(--purple2);
+  margin-bottom: 16px;
+}
+.layer-name { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 6px; letter-spacing: 0.02em; }
+.layer-desc { font-size: 13px; color: var(--text2); line-height: 1.55; margin-bottom: 12px; }
+.layer-eg { font-family: 'Cormorant Garamond', serif; font-size: 15px; color: var(--text3); font-style: italic; line-height: 1.45; }
+
+/* WHY — condensed */
+.why { padding: 100px 48px; }
+.why-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 2px; margin-top: 40px;
+  border: 1px solid var(--border);
+  border-radius: 12px; overflow: hidden;
+}
+.why-item {
+  background: var(--surface);
+  padding: 28px 24px;
+  display: flex; flex-direction: column; gap: 8px;
+  transition: background 0.2s;
+}
+.why-item:hover { background: #1e1845; }
+.why-them {
+  font-size: 12px; color: var(--text3);
+  line-height: 1.5; padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+  font-style: italic;
+}
+.why-arrow {
+  font-size: 18px; color: var(--purple); line-height: 1;
+  padding: 4px 0;
+}
+.why-us {
+  font-size: 14px; color: var(--text2); line-height: 1.55;
+}
+.why-us strong { color: var(--purple2); font-weight: 500; }
+
+/* FINAL CTA */
+.final-cta {
+  padding: 120px 48px; text-align: center;
+  background: var(--bg2); position: relative; overflow: hidden;
+}
+.final-cta::before {
+  content: '';
+  position: absolute; top: 50%; left: 50%;
+  width: 800px; height: 400px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(ellipse, rgba(127,119,221,0.07) 0%, transparent 70%);
+  pointer-events: none;
+}
+.cta-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(48px,7vw,88px);
+  line-height: 0.95; letter-spacing: -0.02em;
+  margin-bottom: 20px;
+}
+.cta-title em { color: var(--purple2); font-style: italic; }
+.cta-sub {
+  font-size: 18px; color: var(--text2);
+  max-width: 400px; margin: 0 auto 40px; line-height: 1.65;
+}
+
+footer {
+  padding: 32px 48px;
+  display: flex; justify-content: space-between; align-items: center;
+  border-top: 1px solid var(--border);
+}
+.footer-logo { font-family: 'Cormorant Garamond', serif; font-size: 18px; color: var(--text3); }
+.footer-logo span { color: var(--purple2); font-style: italic; }
+.footer-note { font-size: 12px; color: var(--text3); letter-spacing: 0.05em; }
+
+@media (max-width: 768px) {
+  nav { padding: 20px 24px; }
+  .hero, .hook, .how, .why, .final-cta, footer { padding-left: 24px; padding-right: 24px; }
+  .email-input { width: 100%; }
+  .waitlist-form { flex-direction: column; }
+  .submit-btn { width: 100%; }
+  .circle { display: none; }
+  body { cursor: auto; }
+  .cursor, .cursor-ring { display: none; }
+  .section-divider { margin: 0 24px; }
+}
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<nav>
+  <div class="nav-logo">rabbit<span>hole</span></div>
+  <a href="#waitlist" class="nav-cta">join the waitlist</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="circle c1"></div>
+  <div class="circle c2"></div>
+  <div class="circle c3"></div>
+
+  <div class="hero-kicker">a new way to meet someone</div>
+
+  <h1 class="hero-title">
+    depth<br/>
+    before<br/>
+    <em>surface.</em>
+  </h1>
+
+  <p class="hero-sub">You meet people through questions — honest, a little uncomfortable, genuinely revealing ones. The photo comes last. By then, you're already in it.</p>
+
+  <div class="waitlist-form" id="waitlist">
+    <input type="email" class="email-input" id="emailInput" placeholder="your@email.com" autocomplete="email">
+    <button class="submit-btn" onclick="handleSubmit()">go deeper →</button>
+    <p class="form-note">No spam. Just early access when we launch.</p>
+    <div class="success-msg" id="successMsg">✦ &nbsp;You're in. We'll be in touch when Rabbithole opens its doors.</div>
+  </div>
+
+  <div class="question-teaser">
+    <div class="qt-label">a taste of layer one</div>
+    <div class="qt-card">
+      <div class="qt-layer">layer 1 — the surface</div>
+      <div class="qt-question">"What's a hill you will absolutely die on?"</div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- EMOTIONAL HOOK -->
+<section class="hook">
+  <p class="hook-intro">If you've ever thought <em>"there has to be a better way to do this"</em> — you're exactly who we built this for.</p>
+
+  <div class="hook-cards">
+    <div class="hook-card">
+      <p>"I'm so tired of being judged on a photo before I've said a single word."</p>
+    </div>
+    <div class="hook-card">
+      <p>"Every conversation starts with 'hey' and dies two messages later."</p>
+    </div>
+    <div class="hook-card">
+      <p>"I've been on these apps for years and I still feel like I haven't actually met anyone."</p>
+    </div>
+    <div class="hook-card">
+      <p>"I want to actually like someone before I have to worry about what they look like."</p>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- HOW IT WORKS -->
+<section class="how">
+  <div class="how-header">
+    <div class="section-kicker">how it works</div>
+    <h2 class="section-title">Four layers.<br/>One <em>reveal.</em></h2>
+  </div>
+
+  <div class="layers-grid">
+    <div class="layer-card">
+      <div class="layer-num-badge">1</div>
+      <div class="layer-name">The Surface</div>
+      <div class="layer-desc">Light but revealing. You start to see a personality — not a profile.</div>
+      <div class="layer-eg">"What's a hill you'll absolutely die on?"</div>
+    </div>
+    <div class="layer-card">
+      <div class="layer-num-badge">2</div>
+      <div class="layer-name">The Personality</div>
+      <div class="layer-desc">Obsessions, quirks, what they watch alone at 2am. A real person starts to emerge.</div>
+      <div class="layer-eg">"What's something you're quietly a little obsessed with that most people don't know about?"</div>
+    </div>
+    <div class="layer-card">
+      <div class="layer-num-badge">3</div>
+      <div class="layer-name">The Real Stuff</div>
+      <div class="layer-desc">Values, vulnerability, what they actually want. Where connection either sparks — or doesn't.</div>
+      <div class="layer-eg">"What's something you need in a person that you'd never put on a dating profile?"</div>
+    </div>
+    <div class="layer-card">
+      <div class="layer-num-badge" style="background:rgba(83,74,183,0.15); border-color:rgba(127,119,221,0.3);">
+        <span style="color:var(--purple2);">✦</span>
+      </div>
+      <div class="layer-name">The Reveal</div>
+      <div class="layer-desc">Photos unlock — mutually, simultaneously. You're already invested. Everything that comes next is different because of that.</div>
+      <div class="layer-eg">"What would someone need to know about you to actually get you?"</div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- WHY RABBITHOLE — condensed -->
+<section class="why">
+  <div class="section-kicker">why rabbithole</div>
+  <h2 class="section-title">Not a better app.<br/>A <em>different</em> thing entirely.</h2>
+
+  <div class="why-grid">
+    <div class="why-item">
+      <div class="why-them">Judged on a photo in three seconds.</div>
+      <div class="why-arrow">↓</div>
+      <div class="why-us"><strong>Questions first.</strong> The photo is earned — not the opening move.</div>
+    </div>
+    <div class="why-item">
+      <div class="why-them">A mutual swipe on looks. That's the whole match.</div>
+      <div class="why-arrow">↓</div>
+      <div class="why-us"><strong>Mutual depth.</strong> Both people dig to layer four before anything unlocks.</div>
+    </div>
+    <div class="why-item">
+      <div class="why-them">Infinite scroll. Nothing feels worth keeping.</div>
+      <div class="why-arrow">↓</div>
+      <div class="why-us"><strong>Deliberately slow.</strong> Limited daily digs. Every connection feels real.</div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- FINAL CTA -->
+<section class="final-cta">
+  <h2 class="cta-title">fall for who<br/>they <em>are.</em></h2>
+  <p class="cta-sub">Join the waitlist. Be one of the first to go deeper.</p>
+
+  <div class="waitlist-form" style="justify-content:center; opacity:1; animation:none;">
+    <input type="email" class="email-input" id="emailInput2" placeholder="your@email.com" autocomplete="email">
+    <button class="submit-btn" onclick="handleSubmit2()">join the waitlist →</button>
+    <p class="form-note" style="text-align:center;">No spam. Early access only. Unsubscribe anytime.</p>
+    <div class="success-msg" id="successMsg2"></div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-logo">rabbit<span>hole</span></div>
+  <div class="footer-note">© 2026 Rabbithole · depth before surface</div>
+</footer>
+
+<script>
+const cursor = document.getElementById('cursor');
+const ring = document.getElementById('cursorRing');
+let mx = 0, my = 0, rx = 0, ry = 0;
+document.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  cursor.style.left = mx + 'px'; cursor.style.top = my + 'px';
+});
+function animateRing() {
+  rx += (mx - rx) * 0.12; ry += (my - ry) * 0.12;
+  ring.style.left = rx + 'px'; ring.style.top = ry + 'px';
+  requestAnimationFrame(animateRing);
+}
+animateRing();
+document.querySelectorAll('button, a, input').forEach(el => {
+  el.addEventListener('mouseenter', () => { cursor.style.transform = 'translate(-50%,-50%) scale(2)'; ring.style.opacity = '0.5'; });
+  el.addEventListener('mouseleave', () => { cursor.style.transform = 'translate(-50%,-50%) scale(1)'; ring.style.opacity = '1'; });
+});
+
+function handleSubmit() {
+  const email = document.getElementById('emailInput').value;
+  if (!email || !email.includes('@')) { document.getElementById('emailInput').style.borderColor = 'rgba(175,100,100,0.5)'; return; }
+  document.getElementById('successMsg').style.display = 'block';
+  document.getElementById('emailInput').style.display = 'none';
+  document.querySelector('#waitlist .submit-btn').style.display = 'none';
+}
+function handleSubmit2() {
+  const email = document.getElementById('emailInput2').value;
+  if (!email || !email.includes('@')) { document.getElementById('emailInput2').style.borderColor = 'rgba(175,100,100,0.5)'; return; }
+  document.getElementById('successMsg2').innerHTML = '✦ &nbsp;You\'re in. We\'ll be in touch when Rabbithole opens its doors.';
+  document.getElementById('successMsg2').style.display = 'block';
+  document.getElementById('emailInput2').style.display = 'none';
+  document.querySelector('.final-cta .submit-btn').style.display = 'none';
+}
+document.querySelector('.nav-cta').addEventListener('click', e => {
+  e.preventDefault();
+  document.getElementById('waitlist').scrollIntoView({ behavior: 'smooth' });
+});
+</script>
+</body>
+</html>
